@@ -11,7 +11,9 @@
 #include <sstream>
 #define SIZE = 100000000 //~100mb
 
-void writeFile(int clientS)
+void writeFile(int client){
+
+}
 
 
 
