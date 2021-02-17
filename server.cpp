@@ -9,6 +9,11 @@
 #include <unistd.h>
 #include <iostream>
 #include <sstream>
+#define SIZE = 100000000 //~100mb
+
+void writeFile(int clientS)
+
+
 
 int main(int argc, char** argv){
 
@@ -68,9 +73,9 @@ int main(int argc, char** argv){
     inet_ntop(client.sin_family, &client.sin_addr,ipstr,sizeof(ipstr));
     std::count << "Connection Accepted from:  " << ipstr << ":" <<
         ntohs(client.sin_port) << std::endl;
-    connectionCount++;
 
-    //Checking for file size
+    
+    /*Checking for file size
     File *file = fopen(argv[0],"w");
     fseek(file,0,SEEK_END);
     int fileSize = ftell(file);
@@ -78,7 +83,9 @@ int main(int argc, char** argv){
     if(fileSize > 100000000){
         std::cerr << "ERROR: File Size is Out of Range";
         return 1;
-    }
+    }*/
+    
+    /*
     //Writing file
     int size = 100000000;
     char buffer[size] = {0};
@@ -97,7 +104,7 @@ int main(int argc, char** argv){
 
     //Change the directory back to the original
     int dirChange = chdir(initialDir);
-
+    */
     return 0;
 
 
