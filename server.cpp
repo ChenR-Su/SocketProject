@@ -11,9 +11,6 @@
 #include <sstream>
 #define SIZE = 100000000 //~100mb
 
-void writeFile(int client){
-
-}
 
 
 
@@ -30,9 +27,9 @@ int main(int argc, char** argv){
     /*Checking to see if the port falls in the range 0-1024
       Prints error message if it does, otherwise make such port
       as a the port for file transfer  */
-    if(atoi(argv[0]) >= 0 && argv[0] <=1024){
+    if(atoi(argv[0] <=1023){
         std::cerr << "ERROR: Desired Port entered is not Operational";
-        return 1;
+        return 0;
     }
     else
         addr.sin_port = htons(argv[0]);
@@ -43,7 +40,7 @@ int main(int argc, char** argv){
     //Checking for binding errors
     if (bind(socket, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
         perror("Error Occured within binding");
-        return 2;
+        return 0;
     }
     else
         printf("Binding Success");
@@ -51,7 +48,7 @@ int main(int argc, char** argv){
     //Listening Procedure and checking for listening error
     if (listen(socket, 1) == -1) {
         perror("Error Occured within listening");
-        return 3;
+        return 0;
     }
     else
         printf("Listening For Future Request");
@@ -65,7 +62,7 @@ int main(int argc, char** argv){
     if (clientSocket == -1)
     {
         perror("Error Occured within acceptance");
-        return 4;
+        return 0;
     }
     else
         printf("Successly Accepted Connection")
@@ -76,37 +73,35 @@ int main(int argc, char** argv){
     std::count << "Connection Accepted from:  " << ipstr << ":" <<
         ntohs(client.sin_port) << std::endl;
 
-    
-    /*Checking for file size
-    File *file = fopen(argv[0],"w");
-    fseek(file,0,SEEK_END);
-    int fileSize = ftell(file);
-    rewind(file);
-    if(fileSize > 100000000){
-        std::cerr << "ERROR: File Size is Out of Range";
-        return 1;
-    }*/
-    
-    /*
-    //Writing file
-    int size = 100000000;
-    char buffer[size] = {0};
-    char* directory = str.substr(argv[1],0);
     //Store the current directory, change/make the target directory to
     //save the file, then change back to the old directory
     char* initialDir[PATH_MAX]; 
+    char* directory = argv[1];
     getcwd(initialDir,sizeof(initialDir));
-    //Create the directory
     int makeCorrespondDir = !mkdir(directory, 0777))
-    while(recv(client, buffer,size,0) > 0){
-        fprintf(file, "%s",buffer)
-    }
-    //@TODO change the name of the file
+    if(makeCorrespondDir < 0)
+        perror("Error on making the correspond directory");
+        return 0;
+
+
+    
+
+    //Writing the file
+    
+
+
+
+
+  
 
 
     //Change the directory back to the original
     int dirChange = chdir(initialDir);
-    */
+    if(dirChange < 0)
+        perror("Error on changing back the directory");
+        return 0;
+
+
     return 0;
 
 
