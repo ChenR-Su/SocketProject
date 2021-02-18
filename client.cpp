@@ -13,7 +13,7 @@
 int main(int argc, char *argv[])
 {
   //Set the max size of the file;
-  int maxFileSize = 100000000;
+  int maxFileSize = 521;
   // create a socket using TCP IP
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -29,7 +29,11 @@ int main(int argc, char *argv[])
   struct sockaddr_in serverAddr;
   serverAddr.sin_family = AF_INET;
   serverAddr.sin_port = htons(portNum); 
-  serverAddr.sin_addr.s_addr = inet_addr(argv[1]);
+  if(argv[1] = "localhost")
+     serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+  else
+     serverAddr.sin_addr.s_addr = inet_addr(argv[1]);
+
   memset(serverAddr.sin_zero, '\0', sizeof(serverAddr.sin_zero));
 
   // connect to the server
@@ -61,19 +65,26 @@ int main(int argc, char *argv[])
   }
 
   // send/receive data to/from connection
-  char data[maxFileSize] = {0};
-  FILE *file;
-  std::cout<< "progress testing " <<std::endl;
-  while (fgets(data,maxFileSize,file) != NULL)
-  {
-      if(send(sockfd,data,maxFileSize,0) == -1){
-        perror("Error in sending File");
-        return 1;
-      }
-      bzero(data,maxFileSize);
+  char data[maxFileSize];
+  FILE *file =  fopen(argv[3],"r");
+  if(file == NULL){
+    std::cerr << "ERROR: File not found";
+    return 1;
   }
-  printf("File Transfer Success\n");
-  printf("Closeing Connection\n");
+  bzero(data,maxFileSize);
+  int f_block_size;
+  while ((f_block_size = fread(data,sizeof(char),maxFileSize,file))>0)
+  {
+    if(send(sockfd,data,f_block_size,0) < 0){
+      std::cerr << "ERROR: Sending Failed";
+      break;
+    }
+    bzero(data,maxFileSize);
+  }
+  
+  
+  
+  
   close(sockfd);
 
   

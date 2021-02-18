@@ -16,7 +16,7 @@
 int main(int argc, char *argv[])
 {
   //Define the file size to max of 100MB
-  int SIZE = 100000000;
+  int SIZE = 521;
   int conneCount = 1;
   // create a socket using TCP IP
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -90,21 +90,35 @@ int main(int argc, char *argv[])
     ntohs(clientAddr.sin_port) << std::endl;
 
   // read/write data from/into the connection
-  char buffer[SIZE] = {0};
+  char buffer[SIZE];
   char fileName[50];
   int n = sprintf(fileName,"%d.file",conneCount);
-  std::ofstream file;
-  file.open(fileName);
-  while(1){
-    if(recv(clientSockfd,buffer,sizeof(buffer),0) <= 0){
-      close(clientSockfd);
-      break;
-      return 0;
+  FILE *file = fopen(fileName, "w");
+  bzero(buffer,SIZE);
+  int f_block_size = 0;
+  int transfer = 0;
+  while(transfer == 0){
+    while(f_block_size = recv(clientSockfd,buffer,SIZE,0)){
+      if(f_block_size == -1){
+        std::cerr << "ERROR in Receiving";
+        break;
+      }
+      if(f_block_size == 0){
+        close(clientSockfd);
+        break;
+      }
+      int write = fwrite(buffer,sizeof(char),f_block_size,file);
+      if(write < f_block_size){
+        std::cerr << "ERROR in Writing";
+        break;
+      }
+      bzero(buffer,SIZE);
     }
-    file << buffer << std::endl;
-    file.close();
-    conneCount++;
+    transfer = 1;
+    fclose(file);
   }
+
+
   printf("%d",conneCount);
 
 
