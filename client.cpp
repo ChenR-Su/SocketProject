@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
   fileCheck.seekg(0,std::ios::end);
   int fileSize = fileCheck.tellg();
   std::cout<< "fileSize is " << fileSize<<std::endl;
-  if(fileSize > maxFileSize){
+  if(fileSize > 100000000){
     std::cerr << "File is larger than the maximum size";
     return 1;
   }
