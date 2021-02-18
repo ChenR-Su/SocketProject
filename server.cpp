@@ -10,9 +10,12 @@
 #include <iostream>
 #include <sstream>
 #include <sys/stat.h>
+//Define the file size to max of 100MB
 
 int main(int argc, char *argv[])
 {
+  int SIZE = 100000000;
+  int conneCount = 1;
   // create a socket using TCP IP
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -65,7 +68,7 @@ int main(int argc, char *argv[])
     return 0;
   }
   else
-    printf("Listening...");
+    printf("Listening...\n");
 
   // accept a new connection
   struct sockaddr_in clientAddr;
@@ -73,11 +76,11 @@ int main(int argc, char *argv[])
   int clientSockfd = accept(sockfd, (struct sockaddr*)&clientAddr, &clientAddrSize);
 
   if (clientSockfd == -1) {
-    perror("accept");
+    perror("Error Occur Within Accepting");
     return 0;
   }
   else
-    printf("Connection Accepted");
+    printf("Connection Accepted\n");
 
   char ipstr[INET_ADDRSTRLEN] = {'\0'};
   inet_ntop(clientAddr.sin_family, &clientAddr.sin_addr, ipstr, sizeof(ipstr));
@@ -85,33 +88,24 @@ int main(int argc, char *argv[])
     ntohs(clientAddr.sin_port) << std::endl;
 
   // read/write data from/into the connection
-  bool isEnd = false;
-  char buf[20] = {0};
-  std::stringstream ss;
-
-  while (!isEnd) {
-    memset(buf, '\0', sizeof(buf));
-
-    if (recv(clientSockfd, buf, 20, 0) == -1) {
-      perror("recv");
-      return 5;
-    }
-
-    ss << buf << std::endl;
-    std::cout << buf << std::endl;
-
-    if (send(clientSockfd, buf, 20, 0) == -1) {
-      perror("send");
-      return 6;
-    }
-
-    if (ss.str() == "close\n")
+  char buffer[SIZE] = {0};
+  char fileName[50];
+  int n = sprintf(fileName,"%d.file",conneCount);
+  FILE *file;
+  file = fopen(fileName,"w");
+  while(1){
+    if(recv(clientSockfd,buffer,sizeof(buffer),0) <= 0){
+      close(clientSockfd);
       break;
-
-    ss.str("");
+      return 0;
+    }
+    fprintf(file,"%s",buffer);
+    bzero(buffer,SIZE);
   }
+  printf("%d",conneCount);
+  conneCount++;
 
-  close(clientSockfd);
+
 
   return 0;
 }
