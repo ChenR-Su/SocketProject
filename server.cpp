@@ -10,10 +10,12 @@
 #include <iostream>
 #include <sstream>
 #include <sys/stat.h>
-//Define the file size to max of 100MB
+#include <fstream>
+
 
 int main(int argc, char *argv[])
 {
+  //Define the file size to max of 100MB
   int SIZE = 100000000;
   int conneCount = 1;
   // create a socket using TCP IP
@@ -30,7 +32,7 @@ int main(int argc, char *argv[])
   //Assigning port number
   int portNum = atoi(argv[1]);
   if(portNum <= 1023){
-    perror("ERROR: Port Number Out Of Range");
+    std::cerr << "ERROR: Port Number Out Of Range";
     return 1;
   }
 
@@ -38,14 +40,14 @@ int main(int argc, char *argv[])
   char currentWorkingDir[260];
   if(getcwd(currentWorkingDir,sizeof(currentWorkingDir))== NULL){
     perror("Error Occured While Generating Current Directory");
-    return 0;
+    return 1;
   }
   printf("%s",currentWorkingDir);
 
   int changeDir = chdir(argv[2]);
   if(changeDir != 0){
     perror("Error Occured While Changing to Destination Directory");
-    return 0;
+    return 1;
   }
 
 
@@ -59,13 +61,13 @@ int main(int argc, char *argv[])
 
   if (bind(sockfd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
     perror("Error Occur Within Binding");
-    return 0;
+    return 1;
   }
 
   // set socket to listen status
   if (listen(sockfd, 1) == -1) {
     perror("Error Occur Within Listen");
-    return 0;
+    return 1;
   }
   else
     printf("Listening...\n");
@@ -77,7 +79,7 @@ int main(int argc, char *argv[])
 
   if (clientSockfd == -1) {
     perror("Error Occur Within Accepting");
-    return 0;
+    return 1;
   }
   else
     printf("Connection Accepted\n");
@@ -91,19 +93,19 @@ int main(int argc, char *argv[])
   char buffer[SIZE] = {0};
   char fileName[50];
   int n = sprintf(fileName,"%d.file",conneCount);
-  FILE *file;
-  file = fopen(fileName,"w");
+  std::ofstream file;
+  file.open(fileName);
   while(1){
     if(recv(clientSockfd,buffer,sizeof(buffer),0) <= 0){
       close(clientSockfd);
       break;
       return 0;
     }
-    fprintf(file,"%s",buffer);
-    bzero(buffer,SIZE);
+    file << buffer << std::endl;
+    file.close();
+    conneCount++;
   }
   printf("%d",conneCount);
-  conneCount++;
 
 
 

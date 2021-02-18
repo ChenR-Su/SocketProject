@@ -6,43 +6,43 @@
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
-
+#include <fstream>
 #include <iostream>
 #include <sstream>
 
-int
-main()
+int main(int argc, char *argv[])
 {
+  //Set the max size of the file;
+  int maxFileSize = 100000000;
   // create a socket using TCP IP
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
-  // struct sockaddr_in addr;
-  // addr.sin_family = AF_INET;
-  // addr.sin_port = htons(40001);     // short, network byte order
-  // addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-  // memset(addr.sin_zero, '\0', sizeof(addr.sin_zero));
-  // if (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
-  //   perror("bind");
-  //   return 1;
-  // }
+  int portNum = atoi(argv[2]);
+  printf("%d\n",portNum);
+  //Test for valid port Number
+  if(portNum <= 1023){
+    std::cerr << "ERROR: invalid port number";
+    return 1;
+  }
+
 
   struct sockaddr_in serverAddr;
   serverAddr.sin_family = AF_INET;
-  serverAddr.sin_port = htons(40000);     // short, network byte order
-  serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+  serverAddr.sin_port = htons(portNum); 
+  serverAddr.sin_addr.s_addr = inet_addr(argv[1]);
   memset(serverAddr.sin_zero, '\0', sizeof(serverAddr.sin_zero));
 
   // connect to the server
   if (connect(sockfd, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1) {
-    perror("connect");
-    return 2;
+    perror("Error in Connection: ");
+    return 1;
   }
 
   struct sockaddr_in clientAddr;
   socklen_t clientAddrLen = sizeof(clientAddr);
   if (getsockname(sockfd, (struct sockaddr *)&clientAddr, &clientAddrLen) == -1) {
     perror("getsockname");
-    return 3;
+    return 1;
   }
 
   char ipstr[INET_ADDRSTRLEN] = {'\0'};
@@ -50,39 +50,34 @@ main()
   std::cout << "Set up a connection from: " << ipstr << ":" <<
     ntohs(clientAddr.sin_port) << std::endl;
 
-
-  // send/receive data to/from connection
-  bool isEnd = false;
-  std::string input;
-  char buf[20] = {0};
-  std::stringstream ss;
-
-  while (!isEnd) {
-    memset(buf, '\0', sizeof(buf));
-
-    std::cout << "send: ";
-    std::cin >> input;
-    if (send(sockfd, input.c_str(), input.size(), 0) == -1) {
-      perror("send");
-      return 4;
-    }
-
-
-    if (recv(sockfd, buf, 20, 0) == -1) {
-      perror("recv");
-      return 5;
-    }
-    ss << buf << std::endl;
-    std::cout << "echo: ";
-    std::cout << buf << std::endl;
-
-    if (ss.str() == "close\n")
-      break;
-
-    ss.str("");
+  //Determine if the file is capaple of sending
+  std::ifstream fileCheck(argv[3],std::ios::binary);
+  fileCheck.seekg(0,std::ios::end);
+  int fileSize = fileCheck.tellg();
+  std::cout<< "fileSize is " << fileSize<<std::endl;
+  if(fileSize > maxFileSize){
+    std::cerr << "File is larger than the maximum size";
+    return 1;
   }
 
+  // send/receive data to/from connection
+  char data[maxFileSize] = {0};
+  FILE *file;
+  std::cout<< "progress testing " <<std::endl;
+  while (fgets(data,maxFileSize,file) != NULL)
+  {
+      if(send(sockfd,data,maxFileSize,0) == -1){
+        perror("Error in sending File");
+        return 1;
+      }
+      bzero(data,maxFileSize);
+  }
+  printf("File Transfer Success\n");
+  printf("Closeing Connection\n");
   close(sockfd);
+
+  
+
 
   return 0;
 }
