@@ -1,5 +1,4 @@
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -7,102 +6,79 @@
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
+
 #include <iostream>
 #include <sstream>
-#define SIZE = 100000000 //~100mb
+
+int
+main()
+{
+  // create a socket using TCP IP
+  int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
 
 
+  // bind address to socket
+  struct sockaddr_in addr;
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons(40000);     // short, network byte order
+  addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+  memset(addr.sin_zero, '\0', sizeof(addr.sin_zero));
 
-int main(int argc, char** argv){
+  if (bind(sockfd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
+    perror("bind");
+    return 2;
+  }
 
-    //Socket creation via TCP, IPv4
-    int socket = socket(AF_INET, SOCK_STREAM,0)
+  // set socket to listen status
+  if (listen(sockfd, 1) == -1) {
+    perror("listen");
+    return 3;
+  }
 
-    //Binding
-    struct sockaddr_in addr;
-    addr.sin_family = AF_INET;
+  // accept a new connection
+  struct sockaddr_in clientAddr;
+  socklen_t clientAddrSize = sizeof(clientAddr);
+  int clientSockfd = accept(sockfd, (struct sockaddr*)&clientAddr, &clientAddrSize);
 
+  if (clientSockfd == -1) {
+    perror("accept");
+    return 4;
+  }
 
-    /*Checking to see if the port falls in the range 0-1024
-      Prints error message if it does, otherwise make such port
-      as a the port for file transfer  */
-    if(atoi(argv[0] <=1023){
-        std::cerr << "ERROR: Desired Port entered is not Operational";
-        return 0;
+  char ipstr[INET_ADDRSTRLEN] = {'\0'};
+  inet_ntop(clientAddr.sin_family, &clientAddr.sin_addr, ipstr, sizeof(ipstr));
+  std::cout << "Accept a connection from: " << ipstr << ":" <<
+    ntohs(clientAddr.sin_port) << std::endl;
+
+  // read/write data from/into the connection
+  bool isEnd = false;
+  char buf[20] = {0};
+  std::stringstream ss;
+
+  while (!isEnd) {
+    memset(buf, '\0', sizeof(buf));
+
+    if (recv(clientSockfd, buf, 20, 0) == -1) {
+      perror("recv");
+      return 5;
     }
-    else
-        addr.sin_port = htons(argv[0]);
 
-    addr.sin_addr.s_addr = inet_addr(localhost);
-    memset(addr.sin_zero,'\0',sizeof(addr.sin_zero));
+    ss << buf << std::endl;
+    std::cout << buf << std::endl;
 
-    //Checking for binding errors
-    if (bind(socket, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-        perror("Error Occured within binding");
-        return 0;
+    if (send(clientSockfd, buf, 20, 0) == -1) {
+      perror("send");
+      return 6;
     }
-    else
-        printf("Binding Success");
 
-    //Listening Procedure and checking for listening error
-    if (listen(socket, 1) == -1) {
-        perror("Error Occured within listening");
-        return 0;
-    }
-    else
-        printf("Listening For Future Request");
+    if (ss.str() == "close\n")
+      break;
 
-    //Connection
-    struct sockaddr_in client;
-    socklen_t clientAddSize = sizeof(client);
-    int clientSocket = accept(socket,(struct sockaddr*)&client,&clientAddSize);
+    ss.str("");
+  }
 
-    //Error checking for acceptance
-    if (clientSocket == -1)
-    {
-        perror("Error Occured within acceptance");
-        return 0;
-    }
-    else
-        printf("Successly Accepted Connection")
-    
-    //Printing the establishment of connection
-    char ipstr[INET_ADDRSTRLEN] = {'\0'};
-    inet_ntop(client.sin_family, &client.sin_addr,ipstr,sizeof(ipstr));
-    std::count << "Connection Accepted from:  " << ipstr << ":" <<
-        ntohs(client.sin_port) << std::endl;
+  close(clientSockfd);
 
-    //Store the current directory, change/make the target directory to
-    //save the file, then change back to the old directory
-    char* initialDir[PATH_MAX]; 
-    char* directory = argv[1];
-    getcwd(initialDir,sizeof(initialDir));
-    int makeCorrespondDir = !mkdir(directory, 0777))
-    if(makeCorrespondDir < 0)
-        perror("Error on making the correspond directory");
-        return 0;
-
-
-    
-
-    //Writing the file
-    
-
-
-
-
-  
-
-
-    //Change the directory back to the original
-    int dirChange = chdir(initialDir);
-    if(dirChange < 0)
-        perror("Error on changing back the directory");
-        return 0;
-
-
-    return 0;
-
-
+  return 0;
 }
