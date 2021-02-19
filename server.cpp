@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <fstream>
 #include <csignal>
+#include <sys/select.h>
 
 void signal_handler(int signl_num){
   std::cout << "test signal";
@@ -102,9 +103,17 @@ int main(int argc, char *argv[])
     // read/write data from/into the connection
     char buffer[SIZE];
     char fileName[50];
+    fd_set readfds;
+    struct timeval timeout;
+    timeout.tv_sec = 10;
+    timeout.tv_usec = 0;
 
-    int n = sprintf(fileName,"%d.file",conneCount);
-    printf("Current FileName %s\n",fileName);
+    FD_ZERO(&readfds);
+    FD_SET(clientSockfd, &readfds);
+    
+
+
+    sprintf(fileName,"%d.file",conneCount);
     conneCount++;
     FILE *file = fopen(fileName, "w");
     bzero(buffer,SIZE);
@@ -112,20 +121,29 @@ int main(int argc, char *argv[])
     int transfer = 0;
     while(transfer == 0){
       while(f_block_size = recv(clientSockfd,buffer,SIZE,0)){
+        int time = select(clientSockfd + 1,&readfds,NULL,NULL,&timeout);
         if(f_block_size == -1){
           std::cerr << "ERROR in Receiving";
+          break;
+        }
+        if(time == 0){
+          freopen(NULL, "w", file);
+          char timeOutBuffer[] = "ERROR";
+          fwrite(timeOutBuffer,sizeof(char),sizeof(timeOutBuffer),file);
+        }
+        else{
+          int write = fwrite(buffer,sizeof(char),f_block_size,file);
+        if(write < f_block_size){
+          std::cerr << "ERROR in Writing";
           break;
         }
         if(f_block_size == 0){
           close(clientSockfd);
           break;
         }
-        int write = fwrite(buffer,sizeof(char),f_block_size,file);
-        if(write < f_block_size){
-          std::cerr << "ERROR in Writing";
-          break;
-        }
         bzero(buffer,SIZE);
+        }
+        
       }
       transfer = 1;
       fclose(file);

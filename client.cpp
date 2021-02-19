@@ -9,6 +9,8 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <errno.h>
+#include <time.h>
 
 int main(int argc, char *argv[])
 {
@@ -25,22 +27,37 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-
+  std::string local = "localhost";
   struct sockaddr_in serverAddr;
   serverAddr.sin_family = AF_INET;
   serverAddr.sin_port = htons(portNum); 
-  if(argv[1] = "localhost")
+  if(argv[1] == local)
      serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
   else
      serverAddr.sin_addr.s_addr = inet_addr(argv[1]);
 
   memset(serverAddr.sin_zero, '\0', sizeof(serverAddr.sin_zero));
 
+
+
   // connect to the server
   if (connect(sockfd, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1) {
     perror("Error in Connection: ");
     return 1;
   }
+
+  fd_set fdset;
+  FD_ZERO(&fdset);
+  FD_SET(sockfd, &fdset);
+  struct timeval timeout;
+    timeout.tv_sec = 10;
+    timeout.tv_usec = 0;
+  int time = select(sockfd + 1, NULL, &fdset, NULL, &timeout);
+  if(time == 0){
+    std::cerr << "ERROR: connection timeout";
+    return 1;
+  }
+
 
   struct sockaddr_in clientAddr;
   socklen_t clientAddrLen = sizeof(clientAddr);
@@ -58,7 +75,6 @@ int main(int argc, char *argv[])
   std::ifstream fileCheck(argv[3],std::ios::binary);
   fileCheck.seekg(0,std::ios::end);
   int fileSize = fileCheck.tellg();
-  std::cout<< "fileSize is " << fileSize<<std::endl;
   if(fileSize > 100000000){
     std::cerr << "File is larger than the maximum size";
     return 1;
