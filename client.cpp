@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 
   // connect to the server
   if (connect(sockfd, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1) {
-    perror("Error in Connection: ");
+    std::cerr << "ERROR: Connection Failed";
     return 1;
   }
 
@@ -71,14 +71,7 @@ int main(int argc, char *argv[])
   std::cout << "Set up a connection from: " << ipstr << ":" <<
     ntohs(clientAddr.sin_port) << std::endl;
 
-  //Determine if the file is capaple of sending
-  std::ifstream fileCheck(argv[3],std::ios::binary);
-  fileCheck.seekg(0,std::ios::end);
-  int fileSize = fileCheck.tellg();
-  if(fileSize > 100000000){
-    std::cerr << "File is larger than the maximum size";
-    return 1;
-  }
+
 
   // send/receive data to/from connection
   char data[maxFileSize];

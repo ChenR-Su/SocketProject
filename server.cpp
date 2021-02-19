@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
         }
         if(time == 0){
           freopen(NULL, "w", file);
-          char timeOutBuffer[] = "ERROR";
+          char timeOutBuffer[] = "ERROR:";
           fwrite(timeOutBuffer,sizeof(char),sizeof(timeOutBuffer),file);
         }
         else{
