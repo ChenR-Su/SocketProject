@@ -52,9 +52,10 @@ int main(int argc, char *argv[])
   struct timeval timeout;
     timeout.tv_sec = 10;
     timeout.tv_usec = 0;
-  int time = select(sockfd + 1, NULL, &fdset, NULL, &timeout);
+  int time = select(sockfd + 1,NULL,&fdset, NULL, &timeout);
   if(time == 0){
     std::cerr << "ERROR: connection timeout";
+    close(sockfd);
     return 1;
   }
 
