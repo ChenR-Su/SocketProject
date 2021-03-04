@@ -100,58 +100,56 @@ int main(int argc, char *argv[])
     std::cout << "Accept a connection from: " << ipstr << ":" <<
       ntohs(clientAddr.sin_port) << std::endl;
 
-    // read/write data from/into the connection
+    // set up recv buffer and filename string
     char buffer[SIZE];
     char fileName[50];
+    //Declearation for timeout
     fd_set readfds;
     struct timeval timeout;
     timeout.tv_sec = 10;
     timeout.tv_usec = 0;
-
     FD_ZERO(&readfds);
     FD_SET(clientSockfd, &readfds);
     
 
-
+    //reading and writing the file
     sprintf(fileName,"%d.file",conneCount);
     conneCount++;
     FILE *file = fopen(fileName, "w");
     bzero(buffer,SIZE);
-    int f_block_size = 0;
+    int fileSegment = 0;
     int transfer = 0;
     while(transfer == 0){
-      while(f_block_size = recv(clientSockfd,buffer,SIZE,0)){
+      while(fileSegment = recv(clientSockfd,buffer,SIZE,0)){
         int time = select(clientSockfd + 1,&readfds,NULL,NULL,&timeout);
-        if(f_block_size == -1){
+        if(fileSegment == -1){
           std::cerr << "ERROR in Receiving";
           break;
         }
         if(time == 0){
           freopen(NULL, "w", file);
-          char timeOutBuffer[] = "ERROR:";
+          //reopen and write the error message if timeout
+          char timeOutBuffer[] = "ERROR: connection timeout";
           fwrite(timeOutBuffer,sizeof(char),sizeof(timeOutBuffer),file);
         }
         else{
-          int write = fwrite(buffer,sizeof(char),f_block_size,file);
-        if(write < f_block_size){
-          std::cerr << "ERROR in Writing";
-          break;
+          //Write Data
+          fwrite(buffer,sizeof(char),fileSegment,file);
         }
-        if(f_block_size == 0){
+        //close the connection if file are all transmitted
+        if(fileSegment == 0){
           close(clientSockfd);
           break;
         }
+        //zero out the buffer
         bzero(buffer,SIZE);
         }
         
-      }
+      
+      //File transfer success, breakout the loop and close the file
       transfer = 1;
       fclose(file);
     }
   }
-  
-
-
-
   return 0;
 }
